@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -58,7 +60,7 @@ public class PacienteRestController {
 	}
 	
 	@PostMapping
-	public ResponseEntity<PacienteDTO> registrar(@RequestBody PacienteDTO pacienteDto) throws Exception {
+	public ResponseEntity<PacienteDTO> registrar(@Valid @RequestBody PacienteDTO pacienteDto) throws Exception {
 		return new ResponseEntity<>(
 				modelMapper.map(
 						pacienteService.registrar(
@@ -66,12 +68,12 @@ public class PacienteRestController {
 						), 
 						PacienteDTO.class
 				),
-				HttpStatus.OK
+				HttpStatus.CREATED
 		);
 	}
 	
 	@PutMapping("/{id}")
-	public ResponseEntity<PacienteDTO> modificar(@RequestBody PacienteDTO pacienteDTOMod) throws Exception {
+	public ResponseEntity<PacienteDTO> modificar(@Valid @RequestBody PacienteDTO pacienteDTOMod) throws Exception {
 		Optional<Paciente> paciente = pacienteService.listarPorId(pacienteDTOMod.getIdPaciente());
 		if (paciente.isPresent()) {
 			pacienteDTOMod = modelMapper.map(
