@@ -1,5 +1,6 @@
 package com.whnm.mediappbackend.restcontroller;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,6 +9,10 @@ import javax.validation.Valid;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.whnm.mediappbackend.dto.PacienteDTO;
 import com.whnm.mediappbackend.entity.Paciente;
@@ -60,16 +66,13 @@ public class PacienteRestController {
 	}
 	
 	@PostMapping
-	public ResponseEntity<PacienteDTO> registrar(@Valid @RequestBody PacienteDTO pacienteDto) throws Exception {
-		return new ResponseEntity<>(
-				modelMapper.map(
-						pacienteService.registrar(
-								modelMapper.map(pacienteDto, Paciente.class)
-						), 
-						PacienteDTO.class
-				),
-				HttpStatus.CREATED
-		);
+	public ResponseEntity<Void> registrar(@Valid @RequestBody PacienteDTO pacienteDto) throws Exception {
+		Paciente paciente = modelMapper.map(pacienteDto, Paciente.class);
+		Paciente pacienteRegistro = pacienteService.registrar(paciente);
+		PacienteDTO pacienteDTORegistro = modelMapper.map(pacienteRegistro,PacienteDTO.class);
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+				.path("/{id}").buildAndExpand(pacienteDTORegistro.getIdPaciente()).toUri();
+		return ResponseEntity.created(location).build();
 	}
 	
 	@PutMapping("/{id}")
@@ -101,5 +104,24 @@ public class PacienteRestController {
 			);
 		}
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+	
+	@GetMapping("/hateoas/{id}")
+	public EntityModel<PacienteDTO> listarHeteoasPorId(@PathVariable("id") Long id) throws Exception {
+		Optional<Paciente> paciente = pacienteService.listarPorId(id);
+		if (!paciente.isPresent()) {
+			throw new ModeloNoFoundException(
+					"Paciente con id: " + id + " no encontrado"
+			);
+		}
+		
+		PacienteDTO pacienteDTO = modelMapper.map(paciente.get(), PacienteDTO.class);
+		
+		EntityModel<PacienteDTO> recurso = EntityModel.of(pacienteDTO);
+		
+		WebMvcLinkBuilder link1 = linkTo(methodOn(this.getClass()).listarPorId(id));
+		recurso.add(link1.withRel("pacienteRecurso1"));
+		
+		return recurso;
 	}
 }

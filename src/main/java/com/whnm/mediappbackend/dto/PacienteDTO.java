@@ -3,6 +3,7 @@ package com.whnm.mediappbackend.dto;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Size;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,12 +13,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Paciente DTO")
 public class PacienteDTO {
 	private Long idPaciente;
 	
+	@Schema(description = "nombres del paciente")
 	@Size(min=3, message= "{nombre.size}")
 	private String nombres;
 	
+	@Schema(description = "apellidos del paciente")
 	@Size(min=3, message= "{apellido.size}")
 	private String apellidos;
 	
